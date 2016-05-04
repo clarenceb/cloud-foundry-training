@@ -1,0 +1,45 @@
+---
+- name: Setup CloudFoundry VM
+  hosts: all
+  become: True
+  become_method: sudo
+  vars:
+    cloud_foundry_cli_version: 6.17.1
+    cloud_foundry_cli_package: "cf-cli-installer_{{ cloud_foundry_cli_version }}_x86-64.deb"
+    cloud_foundry_cli_url: "https://cli.run.pivotal.io/stable?release=debian64&version={{ cloud_foundry_cli_version }}&source=github-rel"
+    java_home: /usr/lib/jvm/java-8-oracle
+    apt_cache_expiry: 28800
+
+  tasks:
+    - name: Install Maven
+      apt: name=maven update_cache=yes cache_valid_time={{ apt_cache_expiry }}
+
+    - name: Set MAVEN_HOME environment variable on system
+      lineinfile: dest=/etc/environment line='MAVEN_HOME=/usr/share/maven' insertafter='EOF' regexp='MAVEN_HOME' state=present
+
+    - name: Install Git
+      apt: name=git
+
+    - name: Install pre-requisities for Oracle JDK 8
+      apt: name={{ item }}
+      with_items:
+        - software-properties-common
+        - python-software-properties
+
+    - name: Install Oracle JDK 8
+      shell: "echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | debconf-set-selections && \
+        add-apt-repository -y ppa:webupd8team/java && \
+        apt-get update && \
+        apt-get install -y oracle-java8-installer"
+      args:
+        executable: /bin/bash
+        creates: "{{ java_home }}/bin/java"
+
+    - name: Set JAVA_HOME environment variable on system (for JDK 8)
+      lineinfile: dest=/etc/environment line='JAVA_HOME={{ java_home }}' insertafter='EOF' regexp='JAVA_HOME' state=present
+
+    - name: Download CloudFoundry CLI package
+      get_url: url="{{ cloud_foundry_cli_url }}" dest="/tmp/{{ cloud_foundry_cli_package }}" mode=0440
+
+    - name: Install CloudFoundry CLI package
+      apt: deb="/tmp/{{ cloud_foundry_cli_package }}"
