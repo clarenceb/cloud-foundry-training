@@ -3,6 +3,8 @@ Cloud Foundry Training VM
 
 Virtual Machine for working on the Cloud Foundry Training.
 
+Access the training materials: [Migrating a Monolith Application to Cloud Native](https://github.com/hpejcinovic-pivotal/pivotal-training/blob/master/student_guide.adoc)
+
 Setup (Mac OS X)
 ----------------
 
